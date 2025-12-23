@@ -143,7 +143,16 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 ## Notes
 
 - This is an initial implementation focusing on basic EAS functionality
-- Currently uses mock data for demonstration purposes
+- Currently uses mock data for demonstration purposes (folders and emails)
 - Full EAS protocol parsing will be implemented in future updates
 - The application currently does not support IMAP, SMTP, or POP3 protocols as per the initial requirements
+- Connection state is managed with Arc<RwLock> for thread-safe shared state
+
+## Known Limitations
+
+- XML response parsing is currently stubbed out with placeholder functions
+- FolderSync and Sync commands return mock data instead of parsing real responses
+- Some code duplication in connection handling (will be optimized in future)
+- Limited error handling and recovery
+- No offline support or caching
 
