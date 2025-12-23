@@ -1,0 +1,47 @@
+[package]
+name = "mailarrow"
+version = "0.1.0"
+edition = "2021"
+authors = ["MailArrow Contributors"]
+license = "AGPL-3.0"
+description = "A fast and lightweight email client with EAS protocol support"
+repository = "https://github.com/Avenger-285714/MailArrow"
+
+[dependencies]
+# GUI framework
+iced = { version = "0.12", features = ["tokio", "image"] }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# HTTP client for EAS protocol
+reqwest = { version = "0.11", features = ["json"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# XML parsing for EAS protocol
+quick-xml = { version = "0.31", features = ["serialize"] }
+
+# Base64 encoding/decoding
+base64 = "0.21"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[dev-dependencies]
+mockito = "1.2"
+tokio-test = "0.4"
