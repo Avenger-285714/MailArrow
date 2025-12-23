@@ -24,7 +24,7 @@
 
 use axum::{
     Router,
-    routing::{options, post},
+    routing::{get, options, post},
     extract::Query,
     http::{StatusCode, HeaderMap, header},
     response::{IntoResponse, Response},
@@ -60,6 +60,7 @@ async fn main() {
 
     // Build router
     let app = Router::new()
+        .route("/", get(handle_root))
         .route("/Microsoft-Server-ActiveSync", options(handle_options))
         .route("/Microsoft-Server-ActiveSync", post(handle_post))
         .layer(TraceLayer::new_for_http());
@@ -68,9 +69,16 @@ async fn main() {
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     info!("Listening on http://{}", addr);
     info!("Test credentials: test@example.com / password123");
+    info!("Server status endpoint: http://{}/", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+/// Handle root GET request - simple status check
+async fn handle_root() -> Response {
+    info!("Root endpoint accessed");
+    (StatusCode::OK, "EAS Test Server is running!\n\nTest credentials:\n- Username: test@example.com\n- Password: password123\n- Endpoint: /Microsoft-Server-ActiveSync").into_response()
 }
 
 /// Handle OPTIONS request - returns EAS capabilities

@@ -23,6 +23,12 @@ cargo run
 
 The server will start on `http://127.0.0.1:8080`.
 
+**Verify server is running:**
+```bash
+curl http://127.0.0.1:8080/
+# Expected output: "EAS Test Server is running!"
+```
+
 ## Test Credentials
 
 Use these credentials in the MailArrow client to connect to the test server:

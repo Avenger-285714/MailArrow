@@ -1,4 +1,4 @@
-use iced::widget::{button, container, text, text_input, Column};
+use iced::widget::{button, container, row, text, text_input, Column, Row};
 use iced::{Element, Length};
 
 #[derive(Debug, Clone)]
@@ -7,6 +7,7 @@ pub enum LoginMessage {
     UsernameChanged(String),
     PasswordChanged(String),
     DomainChanged(String),
+    TogglePasswordVisibility,
     Connect,
 }
 
@@ -17,6 +18,7 @@ pub struct LoginScreen {
     pub password: String,
     pub domain: String,
     pub error_message: Option<String>,
+    pub show_password: bool,
 }
 
 impl LoginScreen {
@@ -27,6 +29,7 @@ impl LoginScreen {
             password: String::new(),
             domain: String::new(),
             error_message: None,
+            show_password: false,
         }
     }
     
@@ -42,10 +45,21 @@ impl LoginScreen {
             .on_input(LoginMessage::UsernameChanged)
             .padding(10);
         
+        // Password input with visibility toggle
         let password_input = text_input("Password", &self.password)
             .on_input(LoginMessage::PasswordChanged)
-            .secure(true)
+            .secure(!self.show_password)
             .padding(10);
+        
+        let toggle_icon = if self.show_password { "👁" } else { "👁‍🗨" };
+        let toggle_button = button(text(toggle_icon).size(20))
+            .on_press(LoginMessage::TogglePasswordVisibility)
+            .padding(10);
+        
+        let password_row = Row::new()
+            .spacing(10)
+            .push(password_input)
+            .push(toggle_button);
         
         let domain_input = text_input("Domain (optional)", &self.domain)
             .on_input(LoginMessage::DomainChanged)
@@ -65,7 +79,7 @@ impl LoginScreen {
             .push(title)
             .push(server_input)
             .push(username_input)
-            .push(password_input)
+            .push(password_row)
             .push(domain_input)
             .push(connect_button);
         
@@ -97,6 +111,9 @@ impl LoginScreen {
             }
             LoginMessage::DomainChanged(domain) => {
                 self.domain = domain;
+            }
+            LoginMessage::TogglePasswordVisibility => {
+                self.show_password = !self.show_password;
             }
             LoginMessage::Connect => {
                 // Connection will be handled by the main app

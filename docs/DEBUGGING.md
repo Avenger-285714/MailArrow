@@ -23,6 +23,18 @@ RUST_LOG=debug cargo run
 - Username: `test@example.com`
 - Password: `password123`
 
+**Verify server is running:**
+```bash
+# Check if server is responding
+curl http://127.0.0.1:8080/
+
+# Expected output: "EAS Test Server is running!"
+```
+
+**Common issues:**
+- **502 Bad Gateway**: The test server is not running. Start it in a separate terminal.
+- **Connection refused**: Check if port 8080 is already in use by another application.
+
 **Note:** The URL normalization automatically uses HTTP for localhost/127.0.0.1 addresses for local testing.
 
 ## Step 1: Enable Debug Logging
@@ -75,7 +87,36 @@ DEBUG mailarrow::eas::client: Received response with status: 404
 ERROR mailarrow::eas::client: HTTP 404 Not Found - EAS endpoint not found at: https://mail.example.com/Microsoft-Server-ActiveSync
 ```
 
+### Bad Gateway (502)
+```
+WARN mailarrow::eas::client: Authentication failed with status: 502 Bad Gateway
+```
+
 ## Step 3: Common Issues and Solutions
+
+### Issue 0: Test Server Not Running (502 Bad Gateway)
+
+**Symptoms**:
+- 502 Bad Gateway error when connecting to `127.0.0.1:8080`
+- Error appears immediately after clicking Connect
+
+**Solution**:
+1. **Start the test server** in a separate terminal:
+   ```bash
+   cd tools/selftests/eas
+   cargo run
+   ```
+2. **Verify server is running**:
+   ```bash
+   curl http://127.0.0.1:8080/
+   # Should respond with: "EAS Test Server is running!"
+   ```
+3. **Check if port 8080 is in use**:
+   ```bash
+   # Linux/Mac
+   lsof -i :8080
+   # Or try a different port by modifying the test server
+   ```
 
 ### Issue 1: Wrong Server URL
 
