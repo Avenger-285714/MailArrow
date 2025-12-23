@@ -5,6 +5,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
+use tracing::{info, debug, warn, error, instrument};
 
 #[derive(Debug, thiserror::Error)]
 pub enum EasError {
@@ -70,10 +71,25 @@ impl EasClient {
     }
     
     /// Connect and authenticate with the EAS server
+    /// 
+    /// # Returns
+    /// 
+    /// * `Ok(())` - Successfully connected and authenticated
+    /// * `Err(EasError)` - Connection or authentication failed
+    /// 
+    /// # Example
+    /// 
+    /// ```no_run
+    /// let mut client = EasClient::new(credentials);
+    /// client.connect().await?;
+    /// ```
+    #[instrument(skip(self), fields(server = %self.credentials.server_url, username = %self.credentials.username))]
     pub async fn connect(&mut self) -> Result<(), EasError> {
+        info!("Starting EAS connection attempt");
         *self.state.write().await = ConnectionState::Connecting;
         
         // Build basic auth
+        debug!("Building authentication header");
         let auth = BASE64.encode(format!(
             "{}:{}",
             self.credentials.username,
@@ -82,16 +98,46 @@ impl EasClient {
         
         // Try OPTIONS request first to check server capabilities
         let url = format!("{}/Microsoft-Server-ActiveSync", self.credentials.server_url);
-        let response = self.client
+        debug!("Sending OPTIONS request to: {}", url);
+        
+        let response = match self.client
             .request(reqwest::Method::OPTIONS, &url)
             .header("Authorization", format!("Basic {}", auth))
             .send()
-            .await?;
+            .await {
+                Ok(resp) => {
+                    debug!("Received response with status: {}", resp.status());
+                    resp
+                }
+                Err(e) => {
+                    error!("HTTP request failed: {}", e);
+                    *self.state.write().await = ConnectionState::Failed;
+                    return Err(EasError::HttpError(e));
+                }
+            };
         
-        if response.status().is_success() {
+        let status = response.status();
+        debug!("Response status code: {}", status);
+        
+        // Log response headers for debugging
+        debug!("Response headers:");
+        for (name, value) in response.headers() {
+            debug!("  {}: {:?}", name, value);
+        }
+        
+        if status.is_success() {
+            info!("Successfully connected to EAS server");
             *self.state.write().await = ConnectionState::Connected;
             Ok(())
         } else {
+            warn!("Authentication failed with status: {}", status);
+            if status.as_u16() == 401 {
+                error!("HTTP 401 Unauthorized - Check username and password");
+            } else if status.as_u16() == 403 {
+                error!("HTTP 403 Forbidden - Access denied");
+            } else if status.as_u16() == 404 {
+                error!("HTTP 404 Not Found - EAS endpoint not found at: {}", url);
+            }
             *self.state.write().await = ConnectionState::Failed;
             Err(EasError::AuthenticationFailed)
         }

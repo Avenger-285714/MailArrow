@@ -1,0 +1,29 @@
+[package]
+name = "eas-test-server"
+version = "0.1.0"
+edition = "2021"
+authors = ["MailArrow Contributors"]
+description = "Local EAS server for testing MailArrow client"
+
+[[bin]]
+name = "eas-test-server"
+path = "src/main.rs"
+
+[dependencies]
+# Web server framework
+axum = "0.7"
+tokio = { version = "1.35", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["trace"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Utilities
+base64 = "0.21"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+reqwest = "0.11"

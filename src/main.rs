@@ -4,9 +4,25 @@ mod ui;
 use iced::{Application, Command, Element, Settings, Theme};
 use ui::{LoginScreen, MainView};
 use eas::{EasClient, Credentials};
+use tracing_subscriber::{fmt, EnvFilter};
 
 fn main() -> iced::Result {
-    env_logger::init();
+    // Initialize tracing subscriber for debug logging
+    // Set RUST_LOG environment variable to control log level
+    // Examples:
+    //   RUST_LOG=debug cargo run     - Show all debug logs
+    //   RUST_LOG=info cargo run      - Show info and above
+    //   RUST_LOG=mailarrow=debug cargo run - Show debug logs only for this crate
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| EnvFilter::new("mailarrow=info"))
+        )
+        .with_target(true)
+        .with_line_number(true)
+        .init();
+    
+    tracing::info!("Starting MailArrow email client");
     
     MailArrow::run(Settings {
         window: iced::window::Settings {
