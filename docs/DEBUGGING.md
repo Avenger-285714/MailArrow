@@ -4,6 +4,27 @@
 
 When you see "Connection failed: Authentication failed", this guide will help you troubleshoot the issue.
 
+## Testing with Local EAS Server
+
+For local testing without a real Exchange server, use the included test server:
+
+```bash
+# Terminal 1: Start the test server
+cd tools/selftests/eas
+cargo run
+
+# Terminal 2: Run MailArrow with debug logging
+cd ../../..
+RUST_LOG=debug cargo run
+```
+
+**Test credentials:**
+- Server URL: `127.0.0.1:8080` (HTTP will be used automatically)
+- Username: `test@example.com`
+- Password: `password123`
+
+**Note:** The URL normalization automatically uses HTTP for localhost/127.0.0.1 addresses for local testing.
+
 ## Step 1: Enable Debug Logging
 
 Run the application with debug logging enabled:
@@ -13,7 +34,7 @@ RUST_LOG=debug cargo run
 ```
 
 This will show detailed information about:
-- The exact URL being contacted
+- The exact URL being contacted (HTTP vs HTTPS)
 - HTTP request headers
 - HTTP response status codes
 - Response headers from the server
@@ -26,8 +47,9 @@ Look for these key log messages:
 ```
 INFO mailarrow::eas::client: Starting EAS connection attempt
 DEBUG mailarrow::eas::client: Building authentication header
-DEBUG mailarrow::eas::client: Sending OPTIONS request to: https://mail.example.com/Microsoft-Server-ActiveSync
+DEBUG mailarrow::eas::client: Sending OPTIONS request to: http://127.0.0.1:8080/Microsoft-Server-ActiveSync
 ```
+(Note: URL will be https:// for production servers, http:// for localhost)
 
 ### Successful Response
 ```
@@ -89,15 +111,20 @@ ERROR mailarrow::eas::client: HTTP 404 Not Found - EAS endpoint not found at: ht
 2. Verify mobile device policy allows EAS
 3. Contact administrator to enable EAS access
 
-### Issue 4: Certificate Issues
+### Issue 4: Certificate Issues (HTTPS vs HTTP)
 
 **Symptoms**:
 - SSL/TLS errors
 - "certificate verify failed"
+- "unexpected EOF" when connecting to local test server
 
 **Solution**:
-1. Verify server uses valid SSL certificate
-2. For self-signed certificates (testing only):
+1. **For Production Servers**: Verify server uses valid SSL certificate
+2. **For Local Testing**: 
+   - Use explicit `http://` prefix: `http://127.0.0.1:8080`
+   - Or the URL will auto-detect localhost/127.0.0.1 and use HTTP
+   - Local IPs (127.0.0.1, localhost, 192.168.x.x, 10.x.x.x) default to HTTP
+3. **For Self-signed Certificates** (testing only):
    - This is not currently supported
    - Future version will add option to trust self-signed certificates
 
@@ -109,7 +136,7 @@ ERROR mailarrow::eas::client: HTTP 404 Not Found - EAS endpoint not found at: ht
 
 **Solution**:
 1. Check internet connection
-2. Verify firewall allows HTTPS (port 443)
+2. Verify firewall allows HTTPS (port 443) or HTTP (port 80/8080)
 3. Try from different network
 4. Check if VPN is required
 

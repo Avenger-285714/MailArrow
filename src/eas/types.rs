@@ -63,6 +63,22 @@ pub struct Credentials {
 
 impl Credentials {
     /// Validate and normalize the server URL
+    /// 
+    /// # Arguments
+    /// 
+    /// * `url` - The server URL to normalize
+    /// 
+    /// # Returns
+    /// 
+    /// * `Ok(String)` - The normalized URL with proper scheme
+    /// * `Err(String)` - Error message if URL is invalid
+    /// 
+    /// # Behavior
+    /// 
+    /// - Empty URLs are rejected
+    /// - URLs with explicit http:// or https:// are preserved
+    /// - localhost and 127.0.0.1 URLs default to http:// (for local testing)
+    /// - All other URLs default to https://
     pub fn normalize_url(url: &str) -> Result<String, String> {
         let trimmed = url.trim();
         
@@ -70,11 +86,21 @@ impl Credentials {
             return Err("Server URL cannot be empty".to_string());
         }
         
-        // If the URL doesn't start with http:// or https://, add https://
-        if !trimmed.starts_with("http://") && !trimmed.starts_with("https://") {
-            Ok(format!("https://{}", trimmed))
+        // If the URL already has a scheme, use it as-is
+        if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+            return Ok(trimmed.to_string());
+        }
+        
+        // Extract the host part (before any path or port)
+        let host_part = trimmed.split('/').next().unwrap_or(trimmed);
+        let host = host_part.split(':').next().unwrap_or(host_part);
+        
+        // Use http:// for localhost and 127.0.0.1 (local testing)
+        // Use https:// for all other addresses (production servers)
+        if host == "localhost" || host == "127.0.0.1" || host.starts_with("192.168.") || host.starts_with("10.") {
+            Ok(format!("http://{}", trimmed))
         } else {
-            Ok(trimmed.to_string())
+            Ok(format!("https://{}", trimmed))
         }
     }
 }

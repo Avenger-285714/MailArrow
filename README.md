@@ -68,8 +68,9 @@ Or run the release build:
 1. **Launch the application**: Run `cargo run` or execute the built binary
 2. **Enter credentials**:
    - **Server URL**: Enter your EAS server URL
-     - Can be in the format: `mail.example.com` (https:// will be added automatically)
-     - Or with explicit protocol: `https://mail.example.com`
+     - Production servers: `mail.example.com` (https:// added automatically)
+     - Local testing: `127.0.0.1:8080` or `localhost:8080` (http:// added automatically)
+     - Explicit protocol: `https://mail.example.com` or `http://127.0.0.1:8080`
    - **Username**: Your email username
    - **Password**: Your email password
    - **Domain** (optional): Your domain if required
@@ -85,7 +86,10 @@ The application performs the following validations on connection:
 - Server URL cannot be empty
 - Username cannot be empty
 - Password cannot be empty
-- Server URL is automatically normalized (adds https:// if no protocol is specified)
+- Server URL is automatically normalized:
+  - Adds `https://` for remote servers (production)
+  - Adds `http://` for localhost, 127.0.0.1, and private IPs (local testing)
+  - Preserves explicit http:// or https:// if provided
 
 ## EAS Protocol Implementation
 

@@ -34,7 +34,7 @@ impl LoginScreen {
         let title = text("MailArrow - EAS Email Client")
             .size(32);
         
-        let server_input = text_input("Server URL (e.g., mail.example.com or https://mail.example.com)", &self.server_url)
+        let server_input = text_input("Server URL (e.g., mail.example.com, 127.0.0.1:8080)", &self.server_url)
             .on_input(LoginMessage::ServerUrlChanged)
             .padding(10);
         

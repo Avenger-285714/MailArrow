@@ -9,11 +9,11 @@ mod tests {
 
     /// Test URL normalization with various input formats
     /// 
-    /// Verifies that URLs without a scheme get https:// prepended,
-    /// while URLs with an existing scheme remain unchanged.
+    /// Verifies that URLs without a scheme get https:// prepended for remote servers,
+    /// and http:// for localhost/local IPs, while URLs with an existing scheme remain unchanged.
     #[test]
     fn test_url_normalization() {
-        // Test case 1: URL without scheme should get https:// added
+        // Test case 1: Remote URL without scheme should get https:// added
         let result = Credentials::normalize_url("mail.example.com");
         assert_eq!(result.unwrap(), "https://mail.example.com");
 
@@ -24,6 +24,14 @@ mod tests {
         // Test case 3: URL with http:// should remain unchanged
         let result = Credentials::normalize_url("http://mail.example.com");
         assert_eq!(result.unwrap(), "http://mail.example.com");
+        
+        // Test case 4: localhost should use http:// by default
+        let result = Credentials::normalize_url("localhost");
+        assert_eq!(result.unwrap(), "http://localhost");
+        
+        // Test case 5: localhost with port should use http://
+        let result = Credentials::normalize_url("localhost:8080");
+        assert_eq!(result.unwrap(), "http://localhost:8080");
     }
 
     /// Test URL normalization with whitespace
@@ -74,20 +82,25 @@ mod tests {
 
     /// Test URL normalization with IP addresses
     /// 
-    /// Verifies that IP addresses (IPv4 and localhost) are handled correctly.
+    /// Verifies that local IP addresses (127.0.0.1, 192.168.x.x, 10.x.x.x) 
+    /// use http:// by default for local testing.
     #[test]
     fn test_url_normalization_with_ip() {
-        // IPv4 address
+        // IPv4 loopback address should use http://
+        let result = Credentials::normalize_url("127.0.0.1");
+        assert_eq!(result.unwrap(), "http://127.0.0.1");
+
+        // IPv4 with port should use http://
+        let result = Credentials::normalize_url("127.0.0.1:8080");
+        assert_eq!(result.unwrap(), "http://127.0.0.1:8080");
+
+        // Private IP range 192.168.x.x should use http://
         let result = Credentials::normalize_url("192.168.1.100");
-        assert_eq!(result.unwrap(), "https://192.168.1.100");
-
-        // IPv4 with port
-        let result = Credentials::normalize_url("192.168.1.100:8080");
-        assert_eq!(result.unwrap(), "https://192.168.1.100:8080");
-
-        // localhost
-        let result = Credentials::normalize_url("localhost");
-        assert_eq!(result.unwrap(), "https://localhost");
+        assert_eq!(result.unwrap(), "http://192.168.1.100");
+        
+        // Private IP range 10.x.x.x should use http://
+        let result = Credentials::normalize_url("10.0.0.1");
+        assert_eq!(result.unwrap(), "http://10.0.0.1");
     }
 }
 
