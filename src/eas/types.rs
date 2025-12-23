@@ -61,6 +61,24 @@ pub struct Credentials {
     pub domain: Option<String>,
 }
 
+impl Credentials {
+    /// Validate and normalize the server URL
+    pub fn normalize_url(url: &str) -> Result<String, String> {
+        let trimmed = url.trim();
+        
+        if trimmed.is_empty() {
+            return Err("Server URL cannot be empty".to_string());
+        }
+        
+        // If the URL doesn't start with http:// or https://, add https://
+        if !trimmed.starts_with("http://") && !trimmed.starts_with("https://") {
+            Ok(format!("https://{}", trimmed))
+        } else {
+            Ok(trimmed.to_string())
+        }
+    }
+}
+
 /// EAS connection state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConnectionState {

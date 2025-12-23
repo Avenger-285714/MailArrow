@@ -68,9 +68,32 @@ impl Application for MailArrow {
                 if let AppState::Login(login_screen) = &mut self.state {
                     match login_msg {
                         ui::login::LoginMessage::Connect => {
+                            // Validate inputs
+                            if login_screen.server_url.trim().is_empty() {
+                                login_screen.error_message = Some("Server URL is required".to_string());
+                                return Command::none();
+                            }
+                            if login_screen.username.trim().is_empty() {
+                                login_screen.error_message = Some("Username is required".to_string());
+                                return Command::none();
+                            }
+                            if login_screen.password.is_empty() {
+                                login_screen.error_message = Some("Password is required".to_string());
+                                return Command::none();
+                            }
+                            
+                            // Normalize server URL
+                            let normalized_url = match Credentials::normalize_url(&login_screen.server_url) {
+                                Ok(url) => url,
+                                Err(e) => {
+                                    login_screen.error_message = Some(format!("Invalid server URL: {}", e));
+                                    return Command::none();
+                                }
+                            };
+                            
                             // Create credentials
                             let credentials = Credentials {
-                                server_url: login_screen.server_url.clone(),
+                                server_url: normalized_url,
                                 username: login_screen.username.clone(),
                                 password: login_screen.password.clone(),
                                 domain: if login_screen.domain.is_empty() {
@@ -155,9 +178,20 @@ impl Application for MailArrow {
                 match result {
                     Ok(()) => {
                         if let AppState::Login(login_screen) = &self.state {
+                            // Normalize server URL
+                            let normalized_url = match Credentials::normalize_url(&login_screen.server_url) {
+                                Ok(url) => url,
+                                Err(e) => {
+                                    if let AppState::Login(login_screen) = &mut self.state {
+                                        login_screen.error_message = Some(format!("Invalid server URL: {}", e));
+                                    }
+                                    return Command::none();
+                                }
+                            };
+                            
                             // Create EAS client and store it
                             let credentials = Credentials {
-                                server_url: login_screen.server_url.clone(),
+                                server_url: normalized_url,
                                 username: login_screen.username.clone(),
                                 password: login_screen.password.clone(),
                                 domain: if login_screen.domain.is_empty() {
